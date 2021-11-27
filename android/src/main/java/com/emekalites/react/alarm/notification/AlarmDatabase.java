@@ -7,8 +7,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-import com.google.gson.Gson;
-
 import java.util.ArrayList;
 
 public class AlarmDatabase extends SQLiteOpenHelper implements AutoCloseable {
@@ -27,7 +25,7 @@ public class AlarmDatabase extends SQLiteOpenHelper implements AutoCloseable {
             + COL_DATA + " TEXT, "
             + COL_ACTIVE + " INTEGER) ";
 
-    private final Gson gson = new Gson();
+    private final AlarmModelCodec codec = new AlarmModelCodec();
 
     AlarmDatabase(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -60,7 +58,7 @@ public class AlarmDatabase extends SQLiteOpenHelper implements AutoCloseable {
             Log.d(Constants.TAG, "get alarm -> id:" + id + ", active:" + active + ", " + data);
 
 
-            alarm = gson.fromJson(data, AlarmModel.class);
+            alarm = codec.fromJson(data);
             alarm.setId(id);
             alarm.setActive(active);
         } catch (Exception e) {
@@ -75,7 +73,7 @@ public class AlarmDatabase extends SQLiteOpenHelper implements AutoCloseable {
         try (SQLiteDatabase db = this.getWritableDatabase()) {
             ContentValues values = new ContentValues();
 
-            String data = gson.toJson(alarm);
+            String data = codec.toJson(alarm);
             Log.i(Constants.TAG, "insert alarm: " + data);
 
             values.put(COL_DATA, data);
@@ -93,7 +91,7 @@ public class AlarmDatabase extends SQLiteOpenHelper implements AutoCloseable {
         try (SQLiteDatabase db = this.getWritableDatabase()) {
             ContentValues values = new ContentValues();
 
-            String data = gson.toJson(alarm);
+            String data = codec.toJson(alarm);
             Log.d(Constants.TAG, "update alarm: " + data);
 
             values.put(COL_ID, alarm.getId());
@@ -135,7 +133,7 @@ public class AlarmDatabase extends SQLiteOpenHelper implements AutoCloseable {
 
                     Log.d(Constants.TAG, "get alarm -> id:" + id + ", active:" + active + ", " + data);
 
-                    AlarmModel alarm = gson.fromJson(data, AlarmModel.class);
+                    AlarmModel alarm = codec.fromJson(data);
                     alarm.setId(id);
                     alarm.setActive(active);
 

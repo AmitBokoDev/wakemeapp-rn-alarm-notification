@@ -10,7 +10,6 @@ import androidx.annotation.NonNull;
 
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.Arguments;
-import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -19,7 +18,6 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
-import com.google.gson.Gson;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -28,10 +26,13 @@ import java.util.ArrayList;
 
 @SuppressWarnings("unused")
 public class ANModule extends ReactContextBaseJavaModule implements ActivityEventListener {
-    private final AlarmUtil alarmUtil;
-    private static ReactApplicationContext mReactContext;
 
     private static final String E_SCHEDULE_ALARM_FAILED = "E_SCHEDULE_ALARM_FAILED";
+
+    private static ReactApplicationContext mReactContext;
+
+    private final AlarmUtil alarmUtil;
+    private final AlarmModelCodec codec = new AlarmModelCodec();
 
     ANModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -120,9 +121,10 @@ public class ANModule extends ReactContextBaseJavaModule implements ActivityEven
     public void getScheduledAlarms(Promise promise) throws JSONException {
         ArrayList<AlarmModel> alarms = alarmUtil.getAlarms();
         WritableArray array = Arguments.createArray();
-        Gson gson = new Gson();
         for (AlarmModel alarm : alarms) {
-            WritableMap alarmMap = alarmUtil.convertJsonToMap(new JSONObject(gson.toJson(alarm)));
+            // TODO triple conversion alarm -> string -> json -> map
+            // this is ugly but I don't have time to fix it now
+            WritableMap alarmMap = alarmUtil.convertJsonToMap(new JSONObject(codec.toJson(alarm)));
             array.pushMap(alarmMap);
         }
         promise.resolve(array);
