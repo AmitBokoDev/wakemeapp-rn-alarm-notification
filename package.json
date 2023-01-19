@@ -1,19 +1,26 @@
 {
-  "name": "joplin-rn-alarm-notification",
-  "title": "React Native Alarm Notification for Joplin",
-  "version": "1.0.7",
+  "name": "wakemeapp-rn-alarm-notification",
+  "title": "React Native Alarm Notification for wakemeapp",
+  "version": "1.0.0",
   "description": "schedule alarm with notification in react-native",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/roman-r-m/react-native-alarm-notification.git",
-    "baseUrl": "https://github.com/roman-r-m/react-native-alarm-notification"
+    "url": "git+https://github.com/AmitBokoDev/wakemeapp-rn-alarm-notification.git",
+    "baseUrl": "https://github.com/AmitBokoDev/wakemeapp-rn-alarm-notification"
   },
   "license": "MIT",
   "licenseFilename": "LICENSE",
-  "readmeFilename": "README.md",
   "devDependencies": {
-    "react": "^16.9.0",
-    "react-native": "^0.67.2"
-  }
+    "react": "^18.1.0",
+    "react-native": "^0.70.6"
+  },
+  "bugs": {
+    "url": "https://github.com/AmitBokoDev/wakemeapp-rn-alarm-notification/issues"
+  },
+  "homepage": "https://github.com/AmitBokoDev/wakemeapp-rn-alarm-notification#readme",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "amitbokodev"
 }
