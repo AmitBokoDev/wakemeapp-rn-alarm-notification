@@ -50,7 +50,7 @@ public class ANModule extends ReactContextBaseJavaModule implements ActivityEven
     public String getName() {
         return "RNAlarmNotification";
     }
-    
+
     // Required for rn built in EventEmitter Calls.
     @ReactMethod
     public void addListener(String eventName) {

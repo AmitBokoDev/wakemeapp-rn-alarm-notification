@@ -17,6 +17,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.RingtoneManager;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
@@ -37,8 +38,13 @@ import static com.emekalites.react.alarm.notification.Constants.ADD_INTENT;
 import static com.emekalites.react.alarm.notification.Constants.NOTIFICATION_ACTION_DISMISS;
 import static com.emekalites.react.alarm.notification.Constants.NOTIFICATION_ACTION_SNOOZE;
 
-class AlarmUtil {
+import com.emekalites.react.alarm.notification.AudioInterface;
 
+class AlarmUtil {
+    private static final String TAG = "ReactNative";
+
+    private Context mContext;
+    private AudioInterface audioInterface;
     private static final long[] DEFAULT_VIBRATE_PATTERN = { 0, 250, 250, 250 };
 
     private final Context context;
@@ -47,6 +53,11 @@ class AlarmUtil {
     AlarmUtil(Application context) {
         this.context = context;
         this.alarmDB = new AlarmDatabase(context);
+
+        mContext = context;
+
+        audioInterface = AudioInterface.getInstance();
+        audioInterface.init(mContext);
     }
 
     private Class<?> getMainActivityClass() {
@@ -68,6 +79,31 @@ class AlarmUtil {
 
     private NotificationManager getNotificationManager() {
         return (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+    }
+
+    private void playAlarmSound(String name, String names, boolean shouldLoop, double volume) {
+        Log.d("ReactNative", "Alarm play sound");
+        float number = (float) volume;
+
+        MediaPlayer mediaPlayer = audioInterface.getSingletonMedia(name, names);
+        mediaPlayer.setLooping(shouldLoop);
+        mediaPlayer.setVolume(number, number);
+        mediaPlayer.start();
+        Log.d("ReactNative", "mediaPlayer: " + mediaPlayer.toString());
+
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                try {
+                    mp.stop();
+                    mp.reset();
+                    mp.release();
+                    Log.e(TAG, "release media player");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     boolean checkAlarm(ArrayList<AlarmModel> alarms, AlarmModel alarm) {
@@ -99,7 +135,7 @@ class AlarmUtil {
         intent.putExtra("intentType", ADD_INTENT);
         intent.putExtra("PendingId", alarm.getId());
 
-        PendingIntent alarmIntent = PendingIntent.getBroadcast(context, alarmId, intent, 0);
+        PendingIntent alarmIntent = PendingIntent.getBroadcast(context, alarmId, intent, PendingIntent.FLAG_IMMUTABLE);
         AlarmManager alarmManager = this.getAlarmManager();
 
         String scheduleType = alarm.getScheduleType();
@@ -141,7 +177,7 @@ class AlarmUtil {
         intent.putExtra("intentType", ADD_INTENT);
         intent.putExtra("PendingId", alarm.getId());
 
-        PendingIntent alarmIntent = PendingIntent.getBroadcast(context, alarmId, intent, 0);
+        PendingIntent alarmIntent = PendingIntent.getBroadcast(context, alarmId, intent, PendingIntent.FLAG_IMMUTABLE);
         AlarmManager alarmManager = this.getAlarmManager();
 
         String scheduleType = alarm.getScheduleType();
@@ -226,10 +262,14 @@ class AlarmUtil {
         AlarmManager alarmManager = this.getAlarmManager();
 
         int alarmId = alarm.getAlarmId();
-
+        try {
+            audioInterface.stopPlayer();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         Intent intent = new Intent(context, AlarmReceiver.class);
         PendingIntent alarmIntent = PendingIntent.getBroadcast(context, alarmId, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_IMMUTABLE);
         alarmManager.cancel(alarmIntent);
 
         alarmDB.delete(alarm.getId());
@@ -267,7 +307,8 @@ class AlarmUtil {
     private PendingIntent createOnDismissedIntent(Context context, int notificationId) {
         Intent intent = new Intent(context, AlarmDismissReceiver.class);
         intent.putExtra(Constants.NOTIFICATION_ID, notificationId);
-        return PendingIntent.getBroadcast(context.getApplicationContext(), notificationId, intent, 0);
+        return PendingIntent.getBroadcast(context.getApplicationContext(), notificationId, intent,
+                PendingIntent.FLAG_IMMUTABLE);
     }
 
     void sendNotification(AlarmModel alarm) {
@@ -326,7 +367,7 @@ class AlarmUtil {
             intent.putExtra("data", alarm.getData());
 
             PendingIntent pendingIntent = PendingIntent.getActivity(context, notificationID, intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT);
+                    PendingIntent.FLAG_IMMUTABLE);
 
             NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, channelID)
                     .setSmallIcon(smallIconResId)
@@ -342,8 +383,10 @@ class AlarmUtil {
 
             if (alarm.isPlaySound()) {
                 // TODO use user-supplied sound if available
-                mBuilder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
-                        AudioManager.STREAM_NOTIFICATION);
+                // mBuilder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
+                // AudioManager.STREAM_ALARM);
+                this.playAlarmSound(alarm.getSoundName(), alarm.getSoundNames(), alarm.isLoopSound(),
+                        alarm.getVolume());
             }
 
             long vibration = alarm.getVibration();
@@ -392,7 +435,7 @@ class AlarmUtil {
                 dismissIntent.setAction(NOTIFICATION_ACTION_DISMISS);
                 dismissIntent.putExtra("AlarmId", alarm.getId());
                 PendingIntent pendingDismiss = PendingIntent.getBroadcast(context, notificationID, dismissIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT);
+                        PendingIntent.FLAG_IMMUTABLE);
                 NotificationCompat.Action dismissAction = new NotificationCompat.Action(
                         android.R.drawable.ic_lock_idle_alarm, "DISMISS", pendingDismiss);
                 mBuilder.addAction(dismissAction);
@@ -401,7 +444,7 @@ class AlarmUtil {
                 snoozeIntent.setAction(NOTIFICATION_ACTION_SNOOZE);
                 snoozeIntent.putExtra("SnoozeAlarmId", alarm.getId());
                 PendingIntent pendingSnooze = PendingIntent.getBroadcast(context, notificationID, snoozeIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT);
+                        PendingIntent.FLAG_IMMUTABLE);
                 NotificationCompat.Action snoozeAction = new NotificationCompat.Action(R.drawable.ic_snooze, "SNOOZE",
                         pendingSnooze);
                 mBuilder.addAction(snoozeAction);
