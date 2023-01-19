@@ -222,6 +222,11 @@ class AlarmUtil {
 
     void doCancelAlarm(int id) {
         try {
+            audioInterface.stopPlayer();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
             AlarmModel alarm = alarmDB.getAlarm(id);
             this.cancelAlarm(alarm, false);
         } catch (Exception e) {
