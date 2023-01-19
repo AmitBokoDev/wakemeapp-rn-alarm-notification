@@ -99,6 +99,11 @@ public class ANModule extends ReactContextBaseJavaModule implements ActivityEven
     }
 
     @ReactMethod
+    public void stopAlarmSound() {
+        alarmUtil.stopAlarmSound();
+    }
+
+    @ReactMethod
     public void deleteRepeatingAlarm(int alarmID) {
         alarmUtil.deleteRepeatingAlarm(alarmID);
     }

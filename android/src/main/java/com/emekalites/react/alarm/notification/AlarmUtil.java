@@ -282,6 +282,14 @@ class AlarmUtil {
         this.setBootReceiver();
     }
 
+    void stopAlarmSound() {
+        try {
+            audioInterface.stopPlayer();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void enableBootReceiver(Context context) {
         ComponentName receiver = new ComponentName(context, AlarmBootReceiver.class);
         PackageManager pm = context.getPackageManager();
